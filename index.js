@@ -2,13 +2,14 @@ const express = require('express');
 const cors = require('cors');
 const { addonBuilder, serveHTTP } = require('stremio-addon-sdk');
 const axios = require('axios');
+const NodeCache = require('node-cache');
 
 const IPTV_CHANNELS_URL = 'https://iptv-org.github.io/api/channels.json';
 const IPTV_STREAMS_URL = 'https://iptv-org.github.io/api/streams.json';
 const PORT = process.env.PORT || 3000;
 
 // Configuration for the channels you want to include
-let config = {
+const config = {
     includeLanguages: [],
     includeCountries: ['GR'],
     excludeLanguages: [],
@@ -23,6 +24,9 @@ app.use(cors({
     optionsSuccessStatus: 204
 }));
 app.use(express.json());
+
+// Create a cache instance
+const cache = new NodeCache({ stdTTL: 3600 }); // Cache for 1 hour
 
 // Addon Manifest
 const addon = new addonBuilder({
@@ -58,25 +62,27 @@ const toMeta = (channel, guideDetails) => ({
     description: guideDetails ? `Now Playing: ${guideDetails.nowPlaying}\nNext: ${guideDetails.next}` : null,
 });
 
-
-// Fetch Channels based on the configuration
+// Optimize getChannels function
 const getChannels = async () => {
-    console.log("Downloading channels")
+    console.log("Downloading channels");
     try {
-        const channelsResponse = await axios.get(IPTV_CHANNELS_URL);
-        const streamsResponse = await axios.get(IPTV_STREAMS_URL);
+        const [channelsResponse, streamsResponse] = await Promise.all([
+            axios.get(IPTV_CHANNELS_URL),
+            axios.get(IPTV_STREAMS_URL)
+        ]);
+
+        const streamSet = new Set(streamsResponse.data.map(stream => stream.channel));
 
         const filteredChannels = channelsResponse.data.filter((channel) =>
             (config.includeCountries.length === 0 || config.includeCountries.includes(channel.country)) &&
             (config.excludeCountries.length === 0 || !config.excludeCountries.includes(channel.country)) &&
             (config.includeLanguages.length === 0 || channel.languages.some(lang => config.includeLanguages.includes(lang))) &&
             (config.excludeLanguages.length === 0 || !channel.languages.some(lang => config.excludeLanguages.includes(lang))) &&
-            !config.excludeCategories.some(cat => channel.categories.includes(cat))
-            && streamsResponse.data.some((stream) => stream.channel === channel.id)
+            !config.excludeCategories.some(cat => channel.categories.includes(cat)) &&
+            streamSet.has(channel.id)
         );
 
-        // console.log("Filtered Channels:", filteredChannels.map(channel => channel.name));
-        console.log("Finished downloading channels")
+        console.log("Finished downloading channels");
         return filteredChannels.map((channel) => toMeta(channel, null));
     } catch (error) {
         console.error('Error fetching channels:', error);
@@ -96,27 +102,34 @@ const getStreamInfo = async () => {
     }
 };
 
-
-// Verify Stream URL
+// Optimize verifyStreamURL function
 const verifyStreamURL = async (url) => {
+    const cachedResult = cache.get(url);
+    if (cachedResult !== undefined) {
+        return cachedResult;
+    }
+
     try {
-        const response = await axios.head(url);
-        return response.status === 200;
+        const response = await axios.head(url, { timeout: 5000 });
+        const result = response.status === 200;
+        cache.set(url, result);
+        return result;
     } catch (error) {
         console.log(`Stream URL verification failed for ${url}:`, error.message);
+        cache.set(url, false);
         return false;
     }
 };
 
-// Fetch all channel information and cache its
+// Optimize get_all_info function
 const get_all_info = async () => {
     if (cachedChannelsInfo) {
         return cachedChannelsInfo;
     }
-    // Cache streams and guides data before the loop
-    await getStreamInfo();
 
+    await getStreamInfo();
     const channels = await getChannels();
+
     const channelsWithDetails = await Promise.all(channels.map(async (channel) => {
         const channelID = channel.id.startsWith('iptv-') ? channel.id.split('iptv-')[1] : channel.id;
         const streamInfo = cachedStreams.find((stream) => stream.channel === channelID);
@@ -124,13 +137,12 @@ const get_all_info = async () => {
             channel.streamInfo = {
                 url: streamInfo.url,
                 title: 'Live Stream',
-            }; // Add stream info to the channel
-        } else {
-            console.log('No valid stream found for channelID:', channelID);
-            return null; // Exclude channel if no valid stream is found
+            };
+            return channel;
         }
-        return channel;
+        return null;
     }));
+
     cachedChannelsInfo = channelsWithDetails.filter(channel => channel !== null);
     return cachedChannelsInfo;
 };
@@ -191,9 +203,10 @@ app.get('/manifest.json', (req, res) => {
 });
 serveHTTP(addon.getInterface(), { server: app, path: '/manifest.json', port: PORT });
 
-// Run get_all_info when the app starts and every hour
+// Optimize fetchAndCacheInfo function
 const fetchAndCacheInfo = async () => {
     try {
+        cachedChannelsInfo = null; // Clear the cache to force a refresh
         await get_all_info();
         console.log('Channel information cached successfully.');
     } catch (error) {
