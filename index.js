@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 const { addonBuilder, serveHTTP } = require('stremio-addon-sdk');
 const axios = require('axios');
 const NodeCache = require('node-cache');
@@ -18,11 +17,6 @@ const config = {
 };
 
 const app = express();
-app.use(cors({
-    origin: '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    optionsSuccessStatus: 204
-}));
 app.use(express.json());
 
 // Create a cache instance
@@ -151,7 +145,7 @@ const get_all_info = async () => {
 addon.defineCatalogHandler(async (args) => {
     if (args.type === 'tv' && args.id === 'iptv-channels') {
         const metas = await get_all_info();
-        console.log("Catalog", metas, args)
+        console.log("Serving catalog with", metas.length, "channels");
         return { metas: metas };
     }
     return { metas: [] };
@@ -164,7 +158,6 @@ addon.defineMetaHandler(async (args) => {
         const channels = await get_all_info();
         const channel = channels.find((meta) => meta.id === args.id);
         if (channel) {
-            console.log("Meta", channel, args)
             return { meta: channel };
         }
     }
@@ -178,7 +171,7 @@ addon.defineStreamHandler(async (args) => {
         const channels = await get_all_info();
         const channel = channels.find((meta) => meta.id === args.id);
         if (channel && channel.streamInfo) {
-            console.log("Steam", channel, args)
+            console.log("Serving stream id: ", channel.id);
             return {
                 streams: [
                     {
@@ -197,7 +190,7 @@ addon.defineStreamHandler(async (args) => {
 // Serve Add-on on Port 3000
 app.get('/manifest.json', (req, res) => {
     const manifest = addon.getInterface();
-    console.log(manifest);
+    console.log("Manifest requested");
     res.setHeader('Content-Type', 'application/json');
     res.json(manifest);
 });
