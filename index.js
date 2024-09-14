@@ -10,13 +10,13 @@ const PORT = process.env.PORT || 3000;
 const CACHE_TTL = parseInt(process.env.CACHE_TTL) || 172800; // Cache TTL in seconds, default 2 days
 const FETCH_INTERVAL = parseInt(process.env.FETCH_INTERVAL) || 86400000; // Fetch interval in milliseconds, default 1 day
 
-// Configuration for channel filtering
+// Configuration for channel filtering.
 const config = {
-    includeLanguages: [],
-    includeCountries: ['GR'],
-    excludeLanguages: [],
-    excludeCountries: [],
-    excludeCategories: [],
+    includeLanguages: process.env.INCLUDE_LANGUAGES ? process.env.INCLUDE_LANGUAGES.split(',') : [],
+    includeCountries: process.env.INCLUDE_COUNTRIES ? process.env.INCLUDE_COUNTRIES.split(',') : ['GR'],
+    excludeLanguages: process.env.EXCLUDE_LANGUAGES ? process.env.EXCLUDE_LANGUAGES.split(',') : [],
+    excludeCountries: process.env.EXCLUDE_COUNTRIES ? process.env.EXCLUDE_COUNTRIES.split(',') : [],
+    excludeCategories: process.env.EXCLUDE_CATEGORIES ? process.env.EXCLUDE_CATEGORIES.split(',') : [],
 };
 
 // Express app setup
