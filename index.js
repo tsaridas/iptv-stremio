@@ -3,11 +3,14 @@ const { addonBuilder, serveHTTP } = require('stremio-addon-sdk');
 const axios = require('axios');
 const NodeCache = require('node-cache');
 
+// Constants
 const IPTV_CHANNELS_URL = 'https://iptv-org.github.io/api/channels.json';
 const IPTV_STREAMS_URL = 'https://iptv-org.github.io/api/streams.json';
 const PORT = process.env.PORT || 3000;
+const CACHE_TTL = parseInt(process.env.CACHE_TTL) || 172800; // Cache TTL in seconds, default 2 days
+const FETCH_INTERVAL = parseInt(process.env.FETCH_INTERVAL) || 86400000; // Fetch interval in milliseconds, default 1 day
 
-// Configuration for the channels you want to include
+// Configuration for channel filtering
 const config = {
     includeLanguages: [],
     includeCountries: ['GR'],
@@ -16,11 +19,12 @@ const config = {
     excludeCategories: [],
 };
 
+// Express app setup
 const app = express();
 app.use(express.json());
 
-// Create a cache instance
-const cache = new NodeCache({ stdTTL: 3600 }); // Cache for 1 hour
+// Cache setup
+const cache = new NodeCache({ stdTTL: CACHE_TTL });
 
 // Addon Manifest
 const addon = new addonBuilder({
@@ -43,20 +47,21 @@ const addon = new addonBuilder({
     background: "https://dl.strem.io/addon-background.jpg",
 });
 
+// Helper Functions
+
 // Convert channel to Stremio accepted Meta object
-const toMeta = (channel, guideDetails) => ({
+const toMeta = (channel) => ({
     id: `iptv-${channel.id}`,
     name: channel.name,
     type: 'tv',
     genres: channel.categories || null,
-    poster: guideDetails ? guideDetails.currentShowImage : channel.logo,
+    poster: channel.logo,
     posterShape: 'square',
     background: channel.logo || null,
     logo: channel.logo || null,
-    description: guideDetails ? `Now Playing: ${guideDetails.nowPlaying}\nNext: ${guideDetails.next}` : null,
 });
 
-// Optimize getChannels function
+// Fetch and filter channels
 const getChannels = async () => {
     console.log("Downloading channels");
     try {
@@ -67,36 +72,34 @@ const getChannels = async () => {
 
         const streamSet = new Set(streamsResponse.data.map(stream => stream.channel));
 
-        const filteredChannels = channelsResponse.data.filter((channel) =>
-            (config.includeCountries.length === 0 || config.includeCountries.includes(channel.country)) &&
-            (config.excludeCountries.length === 0 || !config.excludeCountries.includes(channel.country)) &&
-            (config.includeLanguages.length === 0 || channel.languages.some(lang => config.includeLanguages.includes(lang))) &&
-            (config.excludeLanguages.length === 0 || !channel.languages.some(lang => config.excludeLanguages.includes(lang))) &&
-            !config.excludeCategories.some(cat => channel.categories.includes(cat)) &&
-            streamSet.has(channel.id)
-        );
+        const filteredChannels = channelsResponse.data.filter((channel) => {
+            if (config.includeCountries.length > 0 && !config.includeCountries.includes(channel.country)) return false;
+            if (config.excludeCountries.length > 0 && config.excludeCountries.includes(channel.country)) return false;
+            if (config.includeLanguages.length > 0 && !channel.languages.some(lang => config.includeLanguages.includes(lang))) return false;
+            if (config.excludeLanguages.length > 0 && channel.languages.some(lang => config.excludeLanguages.includes(lang))) return false;
+            if (config.excludeCategories.some(cat => channel.categories.includes(cat))) return false;
+            return streamSet.has(channel.id);
+        });
 
         console.log("Finished downloading channels");
-        return filteredChannels.map((channel) => toMeta(channel, null));
+        return filteredChannels.map(toMeta);
     } catch (error) {
         console.error('Error fetching channels:', error);
         return [];
     }
 };
 
-let cachedStreams = null;
-let cachedChannelsInfo = null;
-
 // Fetch Stream Info for the Channel
 const getStreamInfo = async () => {
-    if (!cachedStreams) {
+    if (!cache.has('streams')) {
         console.log("Downloading streams data");
         const streamsResponse = await axios.get(IPTV_STREAMS_URL);
-        cachedStreams = streamsResponse.data;
+        cache.set('streams', streamsResponse.data);
     }
+    return cache.get('streams');
 };
 
-// Optimize verifyStreamURL function
+// Verify stream URL
 const verifyStreamURL = async (url) => {
     const cachedResult = cache.get(url);
     if (cachedResult !== undefined) {
@@ -115,18 +118,20 @@ const verifyStreamURL = async (url) => {
     }
 };
 
-// Optimize get_all_info function
-const get_all_info = async () => {
-    if (cachedChannelsInfo) {
-        return cachedChannelsInfo;
+// Get all channel information
+const getAllInfo = async () => {
+    if (cache.has('channelsInfo')) {
+        return cache.get('channelsInfo');
     }
 
-    await getStreamInfo();
+    const streams = await getStreamInfo();
     const channels = await getChannels();
 
+    const streamMap = new Map(streams.map(stream => [stream.channel, stream]));
+
     const channelsWithDetails = await Promise.all(channels.map(async (channel) => {
-        const channelID = channel.id.startsWith('iptv-') ? channel.id.split('iptv-')[1] : channel.id;
-        const streamInfo = cachedStreams.find((stream) => stream.channel === channelID);
+        const channelID = channel.id.split('iptv-')[1];
+        const streamInfo = streamMap.get(channelID);
         if (streamInfo && await verifyStreamURL(streamInfo.url)) {
             channel.streamInfo = {
                 url: streamInfo.url,
@@ -137,14 +142,17 @@ const get_all_info = async () => {
         return null;
     }));
 
-    cachedChannelsInfo = channelsWithDetails.filter(channel => channel !== null);
-    return cachedChannelsInfo;
+    const filteredChannelsInfo = channelsWithDetails.filter(Boolean);
+    cache.set('channelsInfo', filteredChannelsInfo);
+    return filteredChannelsInfo;
 };
 
+// Addon Handlers
+
 // Catalog Handler
-addon.defineCatalogHandler(async (args) => {
-    if (args.type === 'tv' && args.id === 'iptv-channels') {
-        const metas = await get_all_info();
+addon.defineCatalogHandler(async ({ type, id }) => {
+    if (type === 'tv' && id === 'iptv-channels') {
+        const metas = await getAllInfo();
         console.log("Serving catalog with", metas.length, "channels");
         return { metas: metas };
     }
@@ -152,11 +160,10 @@ addon.defineCatalogHandler(async (args) => {
 });
 
 // Meta Handler
-addon.defineMetaHandler(async (args) => {
-    if (args.type === 'tv' && args.id.startsWith('iptv-')) {
-        const channelID = args.id.split('iptv-')[1];
-        const channels = await get_all_info();
-        const channel = channels.find((meta) => meta.id === args.id);
+addon.defineMetaHandler(async ({ type, id }) => {
+    if (type === 'tv' && id.startsWith('iptv-')) {
+        const channels = await getAllInfo();
+        const channel = channels.find((meta) => meta.id === id);
         if (channel) {
             return { meta: channel };
         }
@@ -165,29 +172,21 @@ addon.defineMetaHandler(async (args) => {
 });
 
 // Stream Handler
-addon.defineStreamHandler(async (args) => {
-    if (args.type === 'tv' && args.id.startsWith('iptv-')) {
-        const channelID = args.id.split('iptv-')[1];
-        const channels = await get_all_info();
-        const channel = channels.find((meta) => meta.id === args.id);
-        if (channel && channel.streamInfo) {
+addon.defineStreamHandler(async ({ type, id }) => {
+    if (type === 'tv' && id.startsWith('iptv-')) {
+        const channels = await getAllInfo();
+        const channel = channels.find((meta) => meta.id === id);
+        if (channel?.streamInfo) {
             console.log("Serving stream id: ", channel.id);
-            return {
-                streams: [
-                    {
-                        url: channel.streamInfo.url,
-                        title: 'Live Stream',
-                    },
-                ],
-            };
+            return { streams: [channel.streamInfo] };
         } else {
-            console.log('No matching stream found for channelID:', channelID);
+            console.log('No matching stream found for channelID:', id);
         }
     }
     return { streams: [] };
 });
 
-// Serve Add-on on Port 3000
+// Server setup
 app.get('/manifest.json', (req, res) => {
     const manifest = addon.getInterface();
     console.log("Manifest requested");
@@ -196,11 +195,11 @@ app.get('/manifest.json', (req, res) => {
 });
 serveHTTP(addon.getInterface(), { server: app, path: '/manifest.json', port: PORT });
 
-// Optimize fetchAndCacheInfo function
+// Cache management
 const fetchAndCacheInfo = async () => {
     try {
-        cachedChannelsInfo = null; // Clear the cache to force a refresh
-        await get_all_info();
+        cache.del('channelsInfo'); // Clear the cache to force a refresh
+        await getAllInfo();
         console.log('Channel information cached successfully.');
     } catch (error) {
         console.error('Error caching channel information:', error);
@@ -210,8 +209,7 @@ const fetchAndCacheInfo = async () => {
 // Initial fetch
 fetchAndCacheInfo();
 
-// Schedule fetch every hour (3600000 milliseconds)
-setInterval(fetchAndCacheInfo, 3600000);
+// Schedule fetch based on FETCH_INTERVAL
+setInterval(fetchAndCacheInfo, FETCH_INTERVAL);
 
 console.clear();
-// console.log(`config is at http://localhost:${PORT}/`);

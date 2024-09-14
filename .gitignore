@@ -1,8 +1,41 @@
-node_modules
-*.swp
-.git
-beamup.json
+# Dependencies
+node_modules/
 package-lock.json
+
+# IDE and editor files
+.vscode/
+*.swp
+*.swo
+*.idea/
+*.sublime-*
+
+# Build output
+src/dist/
+build/
+dist/
+
+# Version control
+.git/
+
+# Deployment and configuration
 deploy.sh
-.vscode
-src/dist
+beamup.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp

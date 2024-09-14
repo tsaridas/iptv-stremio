@@ -1,20 +1,43 @@
 {
   "name": "iptv-stremio-addon",
   "version": "1.0.0",
-  "description": "This Stremio add-on provides access to various IPTV channels using M3U links. It leverages the excellent work done by [iptv-org](https://github.com/iptv-org), a collection of publicly available IPTV channels from all over the world.",
+  "description": "A Stremio add-on that provides access to various IPTV channels using M3U links, leveraging the excellent work of iptv-org.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "jest",
+    "lint": "eslint ."
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "stremio",
+    "addon",
+    "iptv",
+    "streaming",
+    "m3u"
+  ],
+  "author": "Andreas",
+  "license": "MIT",
   "dependencies": {
     "axios": "^1.7.7",
     "cors": "^2.8.5",
     "express": "^4.21.0",
     "node-cache": "^5.1.2",
     "stremio-addon-sdk": "^1.6.10"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22",
+    "jest": "^29.5.0",
+    "eslint": "^8.40.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tsaridas/iptv-stremio-addon.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tsaridas/iptv-stremio-addon/issues"
   }
 }
