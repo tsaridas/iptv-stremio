@@ -4,6 +4,7 @@ const axios = require('axios');
 const NodeCache = require('node-cache');
 const { SocksProxyAgent } = require('socks-proxy-agent');
 const { HttpProxyAgent } = require('http-proxy-agent');
+const cors = require('cors');
 
 // Constants
 const IPTV_CHANNELS_URL = 'https://iptv-org.github.io/api/channels.json';
@@ -25,6 +26,7 @@ const config = {
 
 // Express app setup
 const app = express();
+app.use(cors()); // Allow all CORS
 app.use(express.json());
 
 // Cache setup
