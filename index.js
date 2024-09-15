@@ -45,7 +45,7 @@ const addon = new addonBuilder({
         extra: [{ name: 'search' }],
     })),
     idPrefixes: ['iptv-'],
-    behaviorHints: { configurable: true, configurationRequired: false },
+    behaviorHints: { configurable: false, configurationRequired: false },
     logo: "https://dl.strem.io/addon-logo.png",
     icon: "https://dl.strem.io/addon-logo.png",
     background: "https://dl.strem.io/addon-background.jpg",
