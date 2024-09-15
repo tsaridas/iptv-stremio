@@ -73,7 +73,8 @@ const manifest = {
                     "sports",
                     "travel",
                     "weather",
-                    "xxx"
+                    "xxx",
+                    "auto"
                 ]
 
             }
@@ -219,13 +220,21 @@ const getAllInfo = async () => {
 // Addon Handlers
 
 // Catalog Handler
-addon.defineCatalogHandler(async ({ type, id }) => {
+addon.defineCatalogHandler(async ({ type, id, extra }) => {
     if (type === 'tv' && id.startsWith('iptv-channels-')) {
         const country = id.split('-')[2];
         const allChannels = await getAllInfo();
-        const countryChannels = allChannels.filter(channel => channel.genres.includes(country));
-        console.log(`Serving catalog for ${country} with ${countryChannels.length} channels`);
-        return { metas: countryChannels };
+        let filteredChannels = allChannels.filter(channel => channel.genres.includes(country));
+
+        if (extra && extra.genre) {
+            const genres = Array.isArray(extra.genre) ? extra.genre : [extra.genre];
+            filteredChannels = filteredChannels.filter(channel =>
+                genres.some(genre => channel.genres.includes(genre))
+            );
+        }
+
+        console.log(`Serving catalog for ${country} with ${filteredChannels.length} channels`);
+        return { metas: filteredChannels };
     }
     return { metas: [] };
 });
