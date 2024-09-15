@@ -42,7 +42,42 @@ const manifest = {
         type: 'tv',
         id: `iptv-channels-${country}`,
         name: `IPTV - ${country}`,
-        extra: [{ name: 'search' }],
+        extra: [
+            {
+                name: 'genre',
+                isRequired: false,
+                "options": [
+                    "animation",
+                    "business",
+                    "classic",
+                    "comedy",
+                    "cooking",
+                    "culture",
+                    "documentary",
+                    "education",
+                    "entertainment",
+                    "family",
+                    "kids",
+                    "legislative",
+                    "lifestyle",
+                    "movies",
+                    "music",
+                    "general",
+                    "religious",
+                    "news",
+                    "outdoor",
+                    "relax",
+                    "series",
+                    "science",
+                    "shop",
+                    "sports",
+                    "travel",
+                    "weather",
+                    "xxx"
+                ]
+
+            }
+        ],
     })),
     idPrefixes: ['iptv-'],
     behaviorHints: { configurable: false, configurationRequired: false },
