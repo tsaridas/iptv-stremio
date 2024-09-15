@@ -107,7 +107,13 @@ const verifyStreamURL = async (url) => {
     }
 
     try {
-        const response = await axios.head(url, { timeout: 5000 });
+        const response = await axios.head(url, {
+            timeout: 5000,
+            headers: {
+                'User-Agent': 'AndroidTV/1.0',
+                'Accept': '*/*'
+            }
+        });
         const result = response.status === 200;
         cache.set(url, result);
         return result;
@@ -213,3 +219,4 @@ fetchAndCacheInfo();
 setInterval(fetchAndCacheInfo, FETCH_INTERVAL);
 
 console.clear();
+

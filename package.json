@@ -24,7 +24,7 @@
     "express": "^4.21.0",
     "node-cache": "^5.1.2",
     "path-to-regexp": ">=0.1.10",
-    "stremio-addon-sdk": "^0.7.1"
+    "stremio-addon-sdk": "^1.6.10"
   },
   "devDependencies": {
     "eslint": "^8.40.0",
