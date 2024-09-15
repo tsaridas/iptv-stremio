@@ -33,7 +33,7 @@ app.use(express.json());
 const cache = new NodeCache({ stdTTL: CACHE_TTL });
 
 // Addon Manifest
-const addon = new addonBuilder({
+const manifest = {
     id: 'org.iptv',
     name: 'IPTV Addon',
     version: '0.0.1',
@@ -51,7 +51,9 @@ const addon = new addonBuilder({
     logo: "https://dl.strem.io/addon-logo.png",
     icon: "https://dl.strem.io/addon-logo.png",
     background: "https://dl.strem.io/addon-background.jpg",
-});
+};
+
+const addon = new addonBuilder(manifest);
 
 // Helper Functions
 
@@ -224,8 +226,6 @@ addon.defineStreamHandler(async ({ type, id }) => {
 
 // Server setup
 app.get('/manifest.json', (req, res) => {
-    const manifest = addon.getInterface();
-    console.log("Manifest requested");
     res.setHeader('Content-Type', 'application/json');
     res.json(manifest);
 });
