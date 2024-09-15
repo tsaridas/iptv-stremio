@@ -65,24 +65,9 @@ const toMeta = (channel) => ({
 const getChannels = async () => {
     console.log("Downloading channels");
     try {
-        const [channelsResponse, streamsResponse] = await Promise.all([
-            axios.get(IPTV_CHANNELS_URL),
-            axios.get(IPTV_STREAMS_URL)
-        ]);
-
-        const streamSet = new Set(streamsResponse.data.map(stream => stream.channel));
-
-        const filteredChannels = channelsResponse.data.filter((channel) => {
-            if (config.includeCountries.length > 0 && !config.includeCountries.includes(channel.country)) return false;
-            if (config.excludeCountries.length > 0 && config.excludeCountries.includes(channel.country)) return false;
-            if (config.includeLanguages.length > 0 && !channel.languages.some(lang => config.includeLanguages.includes(lang))) return false;
-            if (config.excludeLanguages.length > 0 && channel.languages.some(lang => config.excludeLanguages.includes(lang))) return false;
-            if (config.excludeCategories.some(cat => channel.categories.includes(cat))) return false;
-            return streamSet.has(channel.id);
-        });
-
+        const channelsResponse = await axios.get(IPTV_CHANNELS_URL);
         console.log("Finished downloading channels");
-        return filteredChannels.map(toMeta);
+        return channelsResponse.data;
     } catch (error) {
         console.error('Error fetching channels:', error);
         return [];
@@ -100,18 +85,29 @@ const getStreamInfo = async () => {
 };
 
 // Verify stream URL
-const verifyStreamURL = async (url) => {
+const verifyStreamURL = async (url, userAgent, httpReferrer) => {
     const cachedResult = cache.get(url);
     if (cachedResult !== undefined) {
         return cachedResult;
+    }
+
+    const effectiveUserAgent = userAgent || 'Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36 DMOST/2.0.0 (; LGE; webOSTV; WEBOS6.3.2 03.34.95; W6_lm21a;)';
+    const effectiveReferer = httpReferrer || '';
+
+    if (effectiveUserAgent !== 'Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36 DMOST/2.0.0 (; LGE; webOSTV; WEBOS6.3.2 03.34.95; W6_lm21a;)') {
+        console.log(`Using User-Agent: ${effectiveUserAgent}`);
+    }
+    if (httpReferrer) {
+        console.log(`Using Referer: ${effectiveReferer}`);
     }
 
     try {
         const response = await axios.head(url, {
             timeout: 5000,
             headers: {
-                'User-Agent': 'AndroidTV/1.0',
-                'Accept': '*/*'
+                'User-Agent': effectiveUserAgent,
+                'Accept': '*/*',
+                'Referer': effectiveReferer
             }
         });
         const result = response.status === 200;
@@ -135,21 +131,32 @@ const getAllInfo = async () => {
 
     const streamMap = new Map(streams.map(stream => [stream.channel, stream]));
 
-    const channelsWithDetails = await Promise.all(channels.map(async (channel) => {
-        const channelID = channel.id.split('iptv-')[1];
-        const streamInfo = streamMap.get(channelID);
-        if (streamInfo && await verifyStreamURL(streamInfo.url)) {
-            channel.streamInfo = {
+    const filteredChannels = channels.filter((channel) => {
+        if (config.includeCountries.length > 0 && !config.includeCountries.includes(channel.country)) return false;
+        if (config.excludeCountries.length > 0 && config.excludeCountries.includes(channel.country)) return false;
+        if (config.includeLanguages.length > 0 && !channel.languages.some(lang => config.includeLanguages.includes(lang))) return false;
+        if (config.excludeLanguages.length > 0 && channel.languages.some(lang => config.excludeLanguages.includes(lang))) return false;
+        if (config.excludeCategories.some(cat => channel.categories.includes(cat))) return false;
+        return streamMap.has(channel.id);
+    });
+
+    const channelsWithDetails = await Promise.all(filteredChannels.map(async (channel) => {
+        const streamInfo = streamMap.get(channel.id);
+        if (streamInfo && await verifyStreamURL(streamInfo.url, streamInfo.user_agent, streamInfo.http_referrer)) {
+            const meta = toMeta(channel);
+            meta.streamInfo = {
                 url: streamInfo.url,
                 title: 'Live Stream',
+                httpReferrer: streamInfo.http_referrer
             };
-            return channel;
+            return meta;
         }
         return null;
     }));
 
     const filteredChannelsInfo = channelsWithDetails.filter(Boolean);
     cache.set('channelsInfo', filteredChannelsInfo);
+
     return filteredChannelsInfo;
 };
 
@@ -219,4 +226,3 @@ fetchAndCacheInfo();
 setInterval(fetchAndCacheInfo, FETCH_INTERVAL);
 
 console.clear();
-
