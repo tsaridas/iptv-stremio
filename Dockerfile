@@ -24,5 +24,5 @@ EXPOSE 3000
 # Set environment variables
 ENV NODE_ENV=production
 
-# Command to run the application
-CMD ["node", "index.js"]
+# Set the entrypoint to run the application
+ENTRYPOINT ["node", "index.js"]
