@@ -35,7 +35,7 @@ const manifest = {
     id: 'org.iptv',
     name: 'IPTV Addon',
     version: '0.0.1',
-    description: 'Watch live TV from selected countries and languages',
+    description: `Watch live TV from ${config.includeCountries.join(', ')}`,
     resources: ['catalog', 'meta', 'stream'],
     types: ['tv'],
     catalogs: config.includeCountries.map(country => ({
