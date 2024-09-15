@@ -1,40 +1,40 @@
 # IPTV Stremio Addon
 
-This is a Stremio addon that provides access to IPTV channels using M3U links, leveraging the excellent work of iptv-org and removing dead channels.
+This Stremio addon provides access to IPTV channels using M3U links, leveraging the excellent work of iptv-org and filtering out inactive channels.
 
-You can try out the addon with Greek TV channels at this URL:
+## Demo
+
+Try the addon with Greek TV channels:
 [http://a0964931e94e-iptv-stremio.baby-beamup.club/manifest.json](http://a0964931e94e-iptv-stremio.baby-beamup.club/manifest.json)
 
-Please note that since the server hosting this addon is not located in Greece, not all Greek channels may be available. The addon only includes channels that are accessible from the server's location, which may result in a limited selection of Greek TV channels.
+Note: The server hosting this addon is not located in Greece, so some Greek channels may be unavailable. Only channels accessible from the server's location are included.
 
 ## Features
 
-- Access to a wide range of IPTV channels
-- Configurable channel filtering based on languages, countries, and categories
-- Caching mechanism for improved performance
+- Wide range of IPTV channels
+- Configurable channel filtering (languages, countries, categories)
+- Caching for improved performance
 - Proxy support for stream verification
-- Configurable timeout for fetch operations
+- Configurable fetch timeout
 
-## Environment Variables
+## Configuration
 
-The following environment variables can be used to configure the addon:
+Configure the addon using these environment variables:
 
-- `PORT`: The port on which the server will run (default: 3000)
-- `CACHE_TTL`: Cache time-to-live in seconds (default: 172800, which is 2 days)
-- `FETCH_INTERVAL`: Interval for fetching and caching channel information in milliseconds (default: 86400000, which is 1 day)
-- `INCLUDE_LANGUAGES`: Comma-separated list of languages to include (default: empty, include all)
-- `INCLUDE_COUNTRIES`: Comma-separated list of countries to include (default: 'GR')
-- `EXCLUDE_LANGUAGES`: Comma-separated list of languages to exclude (default: empty, exclude none)
-- `EXCLUDE_COUNTRIES`: Comma-separated list of countries to exclude (default: empty, exclude none)
-- `EXCLUDE_CATEGORIES`: Comma-separated list of categories to exclude (default: empty, exclude none)
-- `PROXY_URL`: URL of the proxy server to use for stream verification (default: empty, no proxy)
-- `FETCH_TIMEOUT`: Timeout for fetch operations in milliseconds (default: 10000, which is 10 seconds)
+- `PORT`: Server port (default: 3000)
+- `CACHE_TTL`: Cache time-to-live in seconds (default: 172800, 2 days)
+- `FETCH_INTERVAL`: Channel info fetch interval in milliseconds (default: 86400000, 1 day)
+- `INCLUDE_LANGUAGES`: Languages to include (comma-separated, default: all)
+- `INCLUDE_COUNTRIES`: Countries to include (comma-separated, default: 'GR')
+- `EXCLUDE_LANGUAGES`: Languages to exclude (comma-separated, default: none)
+- `EXCLUDE_COUNTRIES`: Countries to exclude (comma-separated, default: none)
+- `EXCLUDE_CATEGORIES`: Categories to exclude (comma-separated, default: none)
+- `PROXY_URL`: Proxy server URL for stream verification (default: none)
+- `FETCH_TIMEOUT`: Fetch timeout in milliseconds (default: 10000, 10 seconds)
 
-## Running Locally (Without Docker)
+## Local Setup
 
-To run the IPTV Stremio Addon locally without Docker, follow these steps:
-
-1. Ensure you have Node.js installed on your system (version 14.0.0 or higher).
+1. Ensure Node.js v14.0.0+ is installed.
 
 2. Clone the repository:
    ```
@@ -42,86 +42,54 @@ To run the IPTV Stremio Addon locally without Docker, follow these steps:
    cd iptv-stremio-addon
    ```
 
-3. Install the dependencies:
+3. Install dependencies:
    ```
    npm install
    ```
 
-4. Set up environment variables (optional):
-   You can set environment variables directly in your terminal or create a `.env` file in the project root. For example:
-   ```
-   PORT=3000
-   INCLUDE_COUNTRIES=US,UK
-   EXCLUDE_CATEGORIES=news
-   PROXY_URL=socks5://127.0.0.1:9150
-   FETCH_TIMEOUT=10000
-   ```
+4. Configure environment variables (optional):
+   Create a `.env` file or set variables in your terminal.
 
 5. Start the server:
    ```
    npm start
    ```
-
-   If you want to run the server in development mode with auto-restart on file changes:
+   For development mode with auto-restart:
    ```
    npm run dev
    ```
 
-6. The addon should now be running locally. You can access it at `http://localhost:3000/manifest.json`
+6. Access the addon at `http://localhost:3000/manifest.json`
 
-7. To use the addon in Stremio, add the following URL in the Stremio addon section:
+7. Add to Stremio:
    ```
    http://localhost:3000/manifest.json
    ```
+   Use your local IP instead of `localhost` for network-wide access.
 
-   Replace `localhost` with your local IP address if you want to access it from other devices on your network.
+## Docker Deployment
 
-Remember to keep the terminal running while using the addon. To stop the server, press `Ctrl+C` in the terminal.
-
-## Docker
-
-To build and run the Docker container:
-
-1. Build the Docker image:
+1. Build the image:
    ```
    docker build -t iptv-stremio-addon .
    ```
 
-2. Run the Docker container:
+2. Run the container:
    ```
    docker run -p 3000:3000 -e INCLUDE_COUNTRIES=US,UK -e EXCLUDE_CATEGORIES=news -e PROXY_URL=socks5://127.0.0.1:9150 -e FETCH_TIMEOUT=10000 iptv-stremio-addon
    ```
 
-   This example runs the container, mapping port 3000 and setting some environment variables, including a proxy URL and fetch timeout.
+3. Access at `http://localhost:3000/manifest.json`
 
-3. Access the addon at `http://localhost:3000/manifest.json`
+## Proxy Configuration
 
-You can adjust the environment variables as needed when running the container.
+Set `PROXY_URL` for stream verification:
 
-## Proxy Support
+- SOCKS proxy: `PROXY_URL=socks5://127.0.0.1:9150`
+- HTTP proxy: `PROXY_URL=http://127.0.0.1:8080`
 
-The addon now supports the use of a proxy server for stream verification. This can be useful if you're experiencing issues with stream verification due to geographical restrictions or other network-related problems.
+Ensure your proxy is reliable and fast for optimal performance.
 
-To use a proxy:
+## Timeout Settings
 
-1. Set the `PROXY_URL` environment variable to your proxy server's URL. The addon supports both SOCKS and HTTP proxies.
-
-   For a SOCKS proxy:
-   ```
-   PROXY_URL=socks5://127.0.0.1:9150
-   ```
-
-   For an HTTP proxy:
-   ```
-   PROXY_URL=http://127.0.0.1:8080
-   ```
-
-2. The addon will automatically use the specified proxy for stream verification.
-
-Note: Make sure your proxy server is reliable and fast enough to handle the stream verification requests. Using a slow or unreliable proxy may negatively impact the addon's performance.
-
-## Timeout Configuration
-
-You can configure the timeout for fetch operations using the `FETCH_TIMEOUT` environment variable. This sets the maximum time (in milliseconds) to wait for a response when fetching channel information or verifying stream URLs.
-
-For example, to set a 10-second timeout:
+Set `FETCH_TIMEOUT` for fetch operations (in milliseconds):

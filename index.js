@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 const CACHE_TTL = parseInt(process.env.CACHE_TTL) || 172800; // Cache TTL in seconds, default 2 days
 const FETCH_INTERVAL = parseInt(process.env.FETCH_INTERVAL) || 86400000; // Fetch interval in milliseconds, default 1 day
 const PROXY_URL = process.env.PROXY_URL || ''; // Proxy URL for verification
-const FETCH_TIMEOUT = parseInt(process.env.FETCH_TIMEOUT) || 10000; // Fetch timeout in milliseconds, default 5 seconds
+const FETCH_TIMEOUT = parseInt(process.env.FETCH_TIMEOUT) || 10000; // Fetch timeout in milliseconds, default 10 seconds
 
 // Configuration for channel filtering.
 const config = {
@@ -35,7 +35,7 @@ const addon = new addonBuilder({
     id: 'org.iptv',
     name: 'IPTV Addon',
     version: '0.0.1',
-    description: 'Watch live TV from selected countries and languages',
+    description: `Watch live TV from ${config.includeCountries.join(', ')}`,
     resources: ['catalog', 'meta', 'stream'],
     types: ['tv'],
     catalogs: config.includeCountries.map(country => ({
@@ -82,8 +82,13 @@ const getChannels = async () => {
 const getStreamInfo = async () => {
     if (!cache.has('streams')) {
         console.log("Downloading streams data");
-        const streamsResponse = await axios.get(IPTV_STREAMS_URL, { timeout: FETCH_TIMEOUT });
-        cache.set('streams', streamsResponse.data);
+        try {
+            const streamsResponse = await axios.get(IPTV_STREAMS_URL, { timeout: FETCH_TIMEOUT });
+            cache.set('streams', streamsResponse.data);
+        } catch (error) {
+            console.error('Error fetching streams:', error);
+            return [];
+        }
     }
     return cache.get('streams');
 };
@@ -222,7 +227,8 @@ app.get('/manifest.json', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.json(manifest);
 });
-serveHTTP(addon.getInterface(), { server: app, path: '/manifest.json', port: PORT });
+
+serveHTTP(addon.getInterface(), { server: app, path: '/manifest.json' });
 
 // Cache management
 const fetchAndCacheInfo = async () => {
@@ -241,4 +247,6 @@ fetchAndCacheInfo();
 // Schedule fetch based on FETCH_INTERVAL
 setInterval(fetchAndCacheInfo, FETCH_INTERVAL);
 
-console.clear();
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
