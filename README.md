@@ -8,11 +8,6 @@ This is a Stremio addon that provides access to IPTV channels using M3U links, l
 - Configurable channel filtering based on languages, countries, and categories
 - Caching mechanism for improved performance
 
-## Installation
-
-1. Install the addon in Stremio by adding the following URL: `https://your-addon-url.com/manifest.json`
-2. Configure the addon settings if needed (see Environment Variables section)
-
 ## Environment Variables
 
 The following environment variables can be used to configure the addon:
@@ -25,6 +20,52 @@ The following environment variables can be used to configure the addon:
 - `EXCLUDE_LANGUAGES`: Comma-separated list of languages to exclude (default: empty, exclude none)
 - `EXCLUDE_COUNTRIES`: Comma-separated list of countries to exclude (default: empty, exclude none)
 - `EXCLUDE_CATEGORIES`: Comma-separated list of categories to exclude (default: empty, exclude none)
+
+## Running Locally (Without Docker)
+
+To run the IPTV Stremio Addon locally without Docker, follow these steps:
+
+1. Ensure you have Node.js installed on your system (version 14.0.0 or higher).
+
+2. Clone the repository:
+   ```
+   git clone https://github.com/your-username/iptv-stremio-addon.git
+   cd iptv-stremio-addon
+   ```
+
+3. Install the dependencies:
+   ```
+   npm install
+   ```
+
+4. Set up environment variables (optional):
+   You can set environment variables directly in your terminal or create a `.env` file in the project root. For example:
+   ```
+   PORT=3000
+   INCLUDE_COUNTRIES=US,UK
+   EXCLUDE_CATEGORIES=news
+   ```
+
+5. Start the server:
+   ```
+   npm start
+   ```
+
+   If you want to run the server in development mode with auto-restart on file changes:
+   ```
+   npm run dev
+   ```
+
+6. The addon should now be running locally. You can access it at `http://localhost:3000/manifest.json`
+
+7. To use the addon in Stremio, add the following URL in the Stremio addon section:
+   ```
+   http://localhost:3000/manifest.json
+   ```
+
+   Replace `localhost` with your local IP address if you want to access it from other devices on your network.
+
+Remember to keep the terminal running while using the addon. To stop the server, press `Ctrl+C` in the terminal.
 
 ## Docker
 
