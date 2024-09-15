@@ -7,6 +7,7 @@ This is a Stremio addon that provides access to IPTV channels using M3U links, l
 - Access to a wide range of IPTV channels
 - Configurable channel filtering based on languages, countries, and categories
 - Caching mechanism for improved performance
+- Proxy support for stream verification
 
 ## Environment Variables
 
@@ -20,6 +21,7 @@ The following environment variables can be used to configure the addon:
 - `EXCLUDE_LANGUAGES`: Comma-separated list of languages to exclude (default: empty, exclude none)
 - `EXCLUDE_COUNTRIES`: Comma-separated list of countries to exclude (default: empty, exclude none)
 - `EXCLUDE_CATEGORIES`: Comma-separated list of categories to exclude (default: empty, exclude none)
+- `PROXY_URL`: URL of the proxy server to use for stream verification (default: empty, no proxy)
 
 ## Running Locally (Without Docker)
 
@@ -44,6 +46,7 @@ To run the IPTV Stremio Addon locally without Docker, follow these steps:
    PORT=3000
    INCLUDE_COUNTRIES=US,UK
    EXCLUDE_CATEGORIES=news
+   PROXY_URL=socks5://127.0.0.1:9150
    ```
 
 5. Start the server:
@@ -78,11 +81,33 @@ To build and run the Docker container:
 
 2. Run the Docker container:
    ```
-   docker run -p 3000:3000 -e INCLUDE_COUNTRIES=US,UK -e EXCLUDE_CATEGORIES=news iptv-stremio-addon
+   docker run -p 3000:3000 -e INCLUDE_COUNTRIES=US,UK -e EXCLUDE_CATEGORIES=news -e PROXY_URL=socks5://127.0.0.1:9150 iptv-stremio-addon
    ```
 
-   This example runs the container, mapping port 3000 and setting some environment variables.
+   This example runs the container, mapping port 3000 and setting some environment variables, including a proxy URL.
 
 3. Access the addon at `http://localhost:3000/manifest.json`
 
 You can adjust the environment variables as needed when running the container.
+
+## Proxy Support
+
+The addon now supports the use of a proxy server for stream verification. This can be useful if you're experiencing issues with stream verification due to geographical restrictions or other network-related problems.
+
+To use a proxy:
+
+1. Set the `PROXY_URL` environment variable to your proxy server's URL. The addon supports both SOCKS and HTTP proxies.
+
+   For a SOCKS proxy:
+   ```
+   PROXY_URL=socks5://127.0.0.1:9150
+   ```
+
+   For an HTTP proxy:
+   ```
+   PROXY_URL=http://127.0.0.1:8080
+   ```
+
+2. The addon will automatically use the specified proxy for stream verification.
+
+Note: Make sure your proxy server is reliable and fast enough to handle the stream verification requests. Using a slow or unreliable proxy may negatively impact the addon's performance.

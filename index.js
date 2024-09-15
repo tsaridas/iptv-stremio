@@ -2,6 +2,8 @@ const express = require('express');
 const { addonBuilder, serveHTTP } = require('stremio-addon-sdk');
 const axios = require('axios');
 const NodeCache = require('node-cache');
+const SocksProxyAgent = require('socks-proxy-agent');
+const HttpProxyAgent = require('http-proxy-agent');
 
 // Constants
 const IPTV_CHANNELS_URL = 'https://iptv-org.github.io/api/channels.json';
@@ -9,6 +11,7 @@ const IPTV_STREAMS_URL = 'https://iptv-org.github.io/api/streams.json';
 const PORT = process.env.PORT || 3000;
 const CACHE_TTL = parseInt(process.env.CACHE_TTL) || 172800; // Cache TTL in seconds, default 2 days
 const FETCH_INTERVAL = parseInt(process.env.FETCH_INTERVAL) || 86400000; // Fetch interval in milliseconds, default 1 day
+const PROXY_URL = process.env.PROXY_URL || ''; // Proxy URL for verification
 
 // Configuration for channel filtering.
 const config = {
@@ -101,15 +104,26 @@ const verifyStreamURL = async (url, userAgent, httpReferrer) => {
         console.log(`Using Referer: ${effectiveReferer}`);
     }
 
+    let axiosConfig = {
+        timeout: 5000,
+        headers: {
+            'User-Agent': effectiveUserAgent,
+            'Accept': '*/*',
+            'Referer': effectiveReferer
+        }
+    };
+
+    if (PROXY_URL) {
+        if (PROXY_URL.startsWith('socks')) {
+            axiosConfig.httpsAgent = new SocksProxyAgent(PROXY_URL);
+        } else {
+            axiosConfig.httpsAgent = new HttpProxyAgent(PROXY_URL);
+        }
+        console.log(`Using proxy: ${PROXY_URL}`);
+    }
+
     try {
-        const response = await axios.head(url, {
-            timeout: 5000,
-            headers: {
-                'User-Agent': effectiveUserAgent,
-                'Accept': '*/*',
-                'Referer': effectiveReferer
-            }
-        });
+        const response = await axios.head(url, axiosConfig);
         const result = response.status === 200;
         cache.set(url, result);
         return result;
