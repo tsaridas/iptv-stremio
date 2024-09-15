@@ -4,7 +4,6 @@ const axios = require('axios');
 const NodeCache = require('node-cache');
 const { SocksProxyAgent } = require('socks-proxy-agent');
 const { HttpProxyAgent } = require('http-proxy-agent');
-const cors = require('cors');
 
 // Constants
 const IPTV_CHANNELS_URL = 'https://iptv-org.github.io/api/channels.json';
@@ -26,7 +25,6 @@ const config = {
 
 // Express app setup
 const app = express();
-app.use(cors()); // Allow all CORS
 app.use(express.json());
 
 // Cache setup
@@ -37,7 +35,7 @@ const manifest = {
     id: 'org.iptv',
     name: 'IPTV Addon',
     version: '0.0.1',
-    description: `Watch live TV from ${config.includeCountries.join(', ')}`,
+    description: 'Watch live TV from selected countries and languages',
     resources: ['catalog', 'meta', 'stream'],
     types: ['tv'],
     catalogs: config.includeCountries.map(country => ({
@@ -230,7 +228,8 @@ app.get('/manifest.json', (req, res) => {
     res.json(manifest);
 });
 
-serveHTTP(addon.getInterface(), { server: app, path: '/manifest.json' });
+serveHTTP(addon.getInterface(), { server: app, path: '/manifest.json', port: PORT });
+
 
 // Cache management
 const fetchAndCacheInfo = async () => {
@@ -248,7 +247,3 @@ fetchAndCacheInfo();
 
 // Schedule fetch based on FETCH_INTERVAL
 setInterval(fetchAndCacheInfo, FETCH_INTERVAL);
-
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
