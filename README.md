@@ -1,6 +1,6 @@
 # IPTV Stremio Addon
 
-This is a Stremio addon that provides access to IPTV channels using M3U links, leveraging the excellent work of iptv-org and removing and dead channels.
+This is a Stremio addon that provides access to IPTV channels using M3U links, leveraging the excellent work of iptv-org and removing dead channels.
 
 ## Features
 
