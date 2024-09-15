@@ -225,8 +225,8 @@ serveHTTP(addon.getInterface(), { server: app, path: '/manifest.json', port: POR
 const fetchAndCacheInfo = async () => {
     try {
         cache.del('channelsInfo'); // Clear the cache to force a refresh
-        await getAllInfo();
-        console.log('Channel information cached successfully.');
+        const metas = await getAllInfo();
+        console.log(`${metas.length} channel(s) information cached successfully`);
     } catch (error) {
         console.error('Error caching channel information:', error);
     }
