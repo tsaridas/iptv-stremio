@@ -2,8 +2,8 @@ const express = require('express');
 const { addonBuilder, serveHTTP } = require('stremio-addon-sdk');
 const axios = require('axios');
 const NodeCache = require('node-cache');
-const SocksProxyAgent = require('socks-proxy-agent');
-const HttpProxyAgent = require('http-proxy-agent');
+const { SocksProxyAgent } = require('socks-proxy-agent');
+const { HttpProxyAgent } = require('http-proxy-agent');
 
 // Constants
 const IPTV_CHANNELS_URL = 'https://iptv-org.github.io/api/channels.json';
@@ -119,7 +119,6 @@ const verifyStreamURL = async (url, userAgent, httpReferrer) => {
         } else {
             axiosConfig.httpsAgent = new HttpProxyAgent(PROXY_URL);
         }
-        console.log(`Using proxy: ${PROXY_URL}`);
     }
 
     try {
