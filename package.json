@@ -23,7 +23,8 @@
     "cors": "^2.8.5",
     "express": "^4.21.0",
     "node-cache": "^5.1.2",
-    "stremio-addon-sdk": "^1.6.10"
+    "stremio-addon-sdk": "^1.6.10",
+    "path-to-regexp": ">=0.1.10"
   },
   "devDependencies": {
     "nodemon": "^2.0.22",
