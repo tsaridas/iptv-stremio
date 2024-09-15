@@ -13,6 +13,7 @@ Please note that since the server hosting this addon is not located in Greece, n
 - Configurable channel filtering based on languages, countries, and categories
 - Caching mechanism for improved performance
 - Proxy support for stream verification
+- Configurable timeout for fetch operations
 
 ## Environment Variables
 
@@ -27,6 +28,7 @@ The following environment variables can be used to configure the addon:
 - `EXCLUDE_COUNTRIES`: Comma-separated list of countries to exclude (default: empty, exclude none)
 - `EXCLUDE_CATEGORIES`: Comma-separated list of categories to exclude (default: empty, exclude none)
 - `PROXY_URL`: URL of the proxy server to use for stream verification (default: empty, no proxy)
+- `FETCH_TIMEOUT`: Timeout for fetch operations in milliseconds (default: 10000, which is 10 seconds)
 
 ## Running Locally (Without Docker)
 
@@ -52,6 +54,7 @@ To run the IPTV Stremio Addon locally without Docker, follow these steps:
    INCLUDE_COUNTRIES=US,UK
    EXCLUDE_CATEGORIES=news
    PROXY_URL=socks5://127.0.0.1:9150
+   FETCH_TIMEOUT=10000
    ```
 
 5. Start the server:
@@ -86,10 +89,10 @@ To build and run the Docker container:
 
 2. Run the Docker container:
    ```
-   docker run -p 3000:3000 -e INCLUDE_COUNTRIES=US,UK -e EXCLUDE_CATEGORIES=news -e PROXY_URL=socks5://127.0.0.1:9150 iptv-stremio-addon
+   docker run -p 3000:3000 -e INCLUDE_COUNTRIES=US,UK -e EXCLUDE_CATEGORIES=news -e PROXY_URL=socks5://127.0.0.1:9150 -e FETCH_TIMEOUT=10000 iptv-stremio-addon
    ```
 
-   This example runs the container, mapping port 3000 and setting some environment variables, including a proxy URL.
+   This example runs the container, mapping port 3000 and setting some environment variables, including a proxy URL and fetch timeout.
 
 3. Access the addon at `http://localhost:3000/manifest.json`
 
@@ -116,3 +119,9 @@ To use a proxy:
 2. The addon will automatically use the specified proxy for stream verification.
 
 Note: Make sure your proxy server is reliable and fast enough to handle the stream verification requests. Using a slow or unreliable proxy may negatively impact the addon's performance.
+
+## Timeout Configuration
+
+You can configure the timeout for fetch operations using the `FETCH_TIMEOUT` environment variable. This sets the maximum time (in milliseconds) to wait for a response when fetching channel information or verifying stream URLs.
+
+For example, to set a 10-second timeout:

@@ -12,6 +12,7 @@ const PORT = process.env.PORT || 3000;
 const CACHE_TTL = parseInt(process.env.CACHE_TTL) || 172800; // Cache TTL in seconds, default 2 days
 const FETCH_INTERVAL = parseInt(process.env.FETCH_INTERVAL) || 86400000; // Fetch interval in milliseconds, default 1 day
 const PROXY_URL = process.env.PROXY_URL || ''; // Proxy URL for verification
+const FETCH_TIMEOUT = parseInt(process.env.FETCH_TIMEOUT) || 10000; // Fetch timeout in milliseconds, default 5 seconds
 
 // Configuration for channel filtering.
 const config = {
@@ -68,7 +69,7 @@ const toMeta = (channel) => ({
 const getChannels = async () => {
     console.log("Downloading channels");
     try {
-        const channelsResponse = await axios.get(IPTV_CHANNELS_URL);
+        const channelsResponse = await axios.get(IPTV_CHANNELS_URL, { timeout: FETCH_TIMEOUT });
         console.log("Finished downloading channels");
         return channelsResponse.data;
     } catch (error) {
@@ -81,7 +82,7 @@ const getChannels = async () => {
 const getStreamInfo = async () => {
     if (!cache.has('streams')) {
         console.log("Downloading streams data");
-        const streamsResponse = await axios.get(IPTV_STREAMS_URL);
+        const streamsResponse = await axios.get(IPTV_STREAMS_URL, { timeout: FETCH_TIMEOUT });
         cache.set('streams', streamsResponse.data);
     }
     return cache.get('streams');
@@ -105,7 +106,7 @@ const verifyStreamURL = async (url, userAgent, httpReferrer) => {
     }
 
     let axiosConfig = {
-        timeout: 5000,
+        timeout: FETCH_TIMEOUT,
         headers: {
             'User-Agent': effectiveUserAgent,
             'Accept': '*/*',
