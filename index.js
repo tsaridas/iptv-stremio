@@ -37,12 +37,12 @@ const addon = new addonBuilder({
     description: 'Watch live TV from selected countries and languages',
     resources: ['catalog', 'meta', 'stream'],
     types: ['tv'],
-    catalogs: [{
+    catalogs: config.includeCountries.map(country => ({
         type: 'tv',
-        id: 'iptv-channels',
-        name: 'IPTV',
+        id: `iptv-channels-${country}`,
+        name: `IPTV - ${country}`,
         extra: [{ name: 'search' }],
-    }],
+    })),
     idPrefixes: ['iptv-'],
     behaviorHints: { configurable: true, configurationRequired: false },
     logo: "https://dl.strem.io/addon-logo.png",
@@ -177,10 +177,12 @@ const getAllInfo = async () => {
 
 // Catalog Handler
 addon.defineCatalogHandler(async ({ type, id }) => {
-    if (type === 'tv' && id === 'iptv-channels') {
-        const metas = await getAllInfo();
-        console.log("Serving catalog with", metas.length, "channels");
-        return { metas: metas };
+    if (type === 'tv' && id.startsWith('iptv-channels-')) {
+        const country = id.split('-')[2];
+        const allChannels = await getAllInfo();
+        const countryChannels = allChannels.filter(channel => channel.genres.includes(country));
+        console.log(`Serving catalog for ${country} with ${countryChannels.length} channels`);
+        return { metas: countryChannels };
     }
     return { metas: [] };
 });
