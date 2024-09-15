@@ -24,7 +24,9 @@
     "express": "^4.21.0",
     "node-cache": "^5.1.2",
     "path-to-regexp": ">=0.1.10",
-    "stremio-addon-sdk": "^1.6.10"
+    "stremio-addon-sdk": "^1.6.10",
+    "socks-proxy-agent": "^7.0.0",
+    "http-proxy-agent": "^5.0.0"
   },
   "devDependencies": {
     "eslint": "^8.40.0",
