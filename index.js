@@ -54,7 +54,7 @@ const toMeta = (channel) => ({
     id: `iptv-${channel.id}`,
     name: channel.name,
     type: 'tv',
-    genres: channel.categories || null,
+    genres: [...(channel.categories || []), channel.country].filter(Boolean),
     poster: channel.logo,
     posterShape: 'square',
     background: channel.logo || null,
