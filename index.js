@@ -9,7 +9,6 @@ const { HttpProxyAgent } = require('http-proxy-agent');
 const IPTV_CHANNELS_URL = 'https://iptv-org.github.io/api/channels.json';
 const IPTV_STREAMS_URL = 'https://iptv-org.github.io/api/streams.json';
 const PORT = process.env.PORT || 3000;
-const CACHE_TTL = parseInt(process.env.CACHE_TTL) || 172800; // Cache TTL in seconds, default 2 days
 const FETCH_INTERVAL = parseInt(process.env.FETCH_INTERVAL) || 86400000; // Fetch interval in milliseconds, default 1 day
 const PROXY_URL = process.env.PROXY_URL || ''; // Proxy URL for verification
 const FETCH_TIMEOUT = parseInt(process.env.FETCH_TIMEOUT) || 10000; // Fetch timeout in milliseconds, default 10 seconds
@@ -28,7 +27,7 @@ const app = express();
 app.use(express.json());
 
 // Cache setup
-const cache = new NodeCache({ stdTTL: CACHE_TTL });
+const cache = new NodeCache({ stdTTL: 0 }); // Set stdTTL to 0 for infinite TTL
 
 // Addon Manifest
 const manifest = {

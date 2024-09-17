@@ -22,7 +22,6 @@ Note: The server hosting this addon is not located in Greece, so some Greek chan
 Configure the addon using these environment variables:
 
 - `PORT`: Server port (default: 3000)
-- `CACHE_TTL`: Cache time-to-live in seconds (default: 172800, 2 days)
 - `FETCH_INTERVAL`: Channel info fetch interval in milliseconds (default: 86400000, 1 day)
 - `INCLUDE_LANGUAGES`: Languages to include (comma-separated, default: all)
 - `INCLUDE_COUNTRIES`: Countries to include (comma-separated, default: 'GR')
