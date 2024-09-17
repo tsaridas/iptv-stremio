@@ -112,7 +112,7 @@ const getChannels = async () => {
         return channelsResponse.data;
     } catch (error) {
         console.error('Error fetching channels:', error);
-        return [];
+        return null;
     }
 };
 
@@ -185,6 +185,11 @@ const getAllInfo = async () => {
 
     const streams = await getStreamInfo();
     const channels = await getChannels();
+
+    if (!channels) {
+        console.log('Failed to fetch channels, using cached data if available');
+        return cache.get('channelsInfo') || [];
+    }
 
     const streamMap = new Map(streams.map(stream => [stream.channel, stream]));
 
@@ -278,7 +283,6 @@ serveHTTP(addon.getInterface(), { server: app, path: '/manifest.json', port: POR
 // Cache management
 const fetchAndCacheInfo = async () => {
     try {
-        cache.del('channelsInfo'); // Clear the cache to force a refresh
         const metas = await getAllInfo();
         console.log(`${metas.length} channel(s) information cached successfully`);
     } catch (error) {
