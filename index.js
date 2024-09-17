@@ -33,7 +33,7 @@ const cache = new NodeCache({ stdTTL: 0 }); // Set stdTTL to 0 for infinite TTL
 const manifest = {
     id: 'org.iptv',
     name: 'IPTV Addon',
-    version: '0.0.1',
+    version: '0.0.2',
     description: `Watch live TV from ${config.includeCountries.join(', ')}`,
     resources: ['catalog', 'meta', 'stream'],
     types: ['tv'],
