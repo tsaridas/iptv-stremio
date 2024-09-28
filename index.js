@@ -111,6 +111,11 @@ const getChannels = async () => {
         return channelsResponse.data;
     } catch (error) {
         console.error('Error fetching channels:', error);
+        // If we fail to get new channels, serve from cache
+        if (cache.has('channels')) {
+            console.log('Serving channels from cache');
+            return cache.get('channels');
+        }
         return null;
     }
 };
