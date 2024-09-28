@@ -7,6 +7,7 @@ node_modules/
 *.swo
 *.idea/
 *.sublime-*
+.*.json
 
 # Build output
 src/dist/
